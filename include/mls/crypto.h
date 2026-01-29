@@ -274,7 +274,7 @@ struct SignaturePrivateKey
   void set_public_key(CipherSuite suite);
   std::string to_jwk(CipherSuite suite) const;
 
-  TLS_SERIALIZABLE(data)
+  TLS_SERIALIZABLE(data, public_key)
 
 private:
   SignaturePrivateKey(bytes priv_data, bytes pub_data);

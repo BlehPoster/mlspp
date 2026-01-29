@@ -1327,9 +1327,12 @@ TreeKEMPublicKey::exists_in_tree(const SignaturePublicKey& key,
 tls::ostream&
 operator<<(tls::ostream& str, const TreeKEMPublicKey& obj)
 {
-  // Empty tree
+  str << obj.suite;
+  
   if (obj.size.val == 0) {
-    return str << std::vector<OptionalNode>{};
+    str << std::vector<OptionalNode>{};
+    str << obj.hashes;
+    return str;
   }
 
   LeafIndex cut = LeafIndex{ obj.size.val - 1 };
@@ -1345,15 +1348,24 @@ operator<<(tls::ostream& str, const TreeKEMPublicKey& obj)
     view.at(i.val) = obj.nodes.at(i);
   }
 
-  return str << view;
+  str << view;
+  str << obj.hashes;
+  return str;
 }
 
 tls::istream&
 operator>>(tls::istream& str, TreeKEMPublicKey& obj)
 {
+  // Deserialize the cipher suite first
+  str >> obj.suite;
+  
   // Read the node list
   std::vector<OptionalNode> nodes;
   str >> nodes;
+  
+  // Read the hashes map
+  str >> obj.hashes;
+  
   if (nodes.empty()) {
     return str;
   }

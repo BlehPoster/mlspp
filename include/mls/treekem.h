@@ -252,15 +252,15 @@ struct TreeKEMPublicKey
   OptionalNode& node_at(LeafIndex n);
   const OptionalNode& node_at(LeafIndex n) const;
 
-  TLS_SERIALIZABLE(nodes)
+  std::map<NodeIndex, bytes> hashes;
+
+  TLS_SERIALIZABLE(suite, size, nodes, hashes)
 
 #if ENABLE_TREE_DUMP
   void dump() const;
 #endif
 
 private:
-  std::map<NodeIndex, bytes> hashes;
-
   void clear_hash_all();
   void clear_hash_path(LeafIndex index);
 
