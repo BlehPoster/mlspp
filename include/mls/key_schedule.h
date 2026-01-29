@@ -20,6 +20,8 @@ struct HashRatchet
   size_t nonce_size;
   size_t secret_size;
 
+  TLS_SERIALIZABLE(suite, next_secret, next_generation, cache, key_size, nonce_size, secret_size);
+
   // These defaults are necessary for use with containers
   HashRatchet() = default;
   HashRatchet(const HashRatchet& other) = default;
@@ -36,6 +38,14 @@ struct HashRatchet
 
 struct SecretTree
 {
+  CipherSuite suite;
+  LeafCount group_size;
+  NodeIndex root;
+  std::map<NodeIndex, bytes> secrets;
+  size_t secret_size;
+
+  TLS_SERIALIZABLE(suite, group_size, root, secrets, secret_size);
+
   SecretTree() = default;
   SecretTree(CipherSuite suite_in,
              LeafCount group_size_in,
@@ -44,24 +54,25 @@ struct SecretTree
   bool has_leaf(LeafIndex sender) { return sender < group_size; }
 
   bytes get(LeafIndex sender);
-
-private:
-  CipherSuite suite;
-  LeafCount group_size;
-  NodeIndex root;
-  std::map<NodeIndex, bytes> secrets;
-  size_t secret_size;
 };
 
 using ReuseGuard = std::array<uint8_t, 4>;
 
 struct GroupKeySource
 {
-  enum struct RatchetType
+  enum struct RatchetType : uint8_t
   {
     handshake,
     application,
   };
+
+  CipherSuite suite;
+  SecretTree secret_tree;
+
+  using Key = std::tuple<RatchetType, LeafIndex>;
+  std::map<Key, HashRatchet> chains;
+
+  TLS_SERIALIZABLE(suite, secret_tree, chains);
 
   GroupKeySource() = default;
   GroupKeySource(CipherSuite suite_in,
@@ -78,13 +89,6 @@ struct GroupKeySource
                   ReuseGuard reuse_guard);
   void erase(ContentType type, LeafIndex sender, uint32_t generation);
 
-private:
-  CipherSuite suite;
-  SecretTree secret_tree;
-
-  using Key = std::tuple<RatchetType, LeafIndex>;
-  std::map<Key, HashRatchet> chains;
-
   HashRatchet& chain(RatchetType type, LeafIndex sender);
   HashRatchet& chain(ContentType type, LeafIndex sender);
 
@@ -93,10 +97,8 @@ private:
 
 struct KeyScheduleEpoch
 {
-private:
   CipherSuite suite;
 
-public:
   bytes joiner_secret;
   bytes epoch_secret;
 
@@ -112,6 +114,8 @@ public:
   bytes init_secret;
 
   HPKEPrivateKey external_priv;
+
+  TLS_SERIALIZABLE(suite, joiner_secret, epoch_secret, sender_data_secret, encryption_secret, exporter_secret, epoch_authenticator, external_secret, confirmation_key, confirmation_tag, membership_key, resumption_psk, init_secret, external_priv);
 
   KeyScheduleEpoch() = default;
 
@@ -190,6 +194,10 @@ struct TranscriptHash
   CipherSuite suite;
   bytes confirmed;
   bytes interim;
+
+  TLS_SERIALIZABLE(suite, confirmed, interim);
+
+  TranscriptHash() = default;
 
   // For a new group
   TranscriptHash(CipherSuite suite_in);

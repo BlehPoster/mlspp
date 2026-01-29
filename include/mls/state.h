@@ -46,6 +46,8 @@ public:
   /// Constructors
   ///
 
+  State() = default;
+
   // Initialize an empty group
   State(bytes group_id,
         CipherSuite suite,
@@ -242,7 +244,7 @@ public:
     const MessageOpts& msg_opts);
   Tombstone handle_reinit_commit(const MLSMessage& commit);
 
-protected:
+public:
   // Shared confirmed state
   // XXX(rlb@ipv.sx): Can these be made const?
   CipherSuite _suite;
@@ -266,6 +268,8 @@ protected:
 
   using EpochRef = std::tuple<bytes, epoch_t>;
   std::map<EpochRef, bytes> _resumption_psks;
+
+  TLS_SERIALIZABLE(_suite, _group_id, _epoch, _tree, _tree_priv, _transcript_hash, _extensions, _key_schedule, _keys, _index, _identity_priv, _external_psks, _resumption_psks);
 
   // Cache of Proposals and update secrets
   struct CachedProposal

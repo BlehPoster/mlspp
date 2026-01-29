@@ -81,6 +81,8 @@ struct TreeKEMPrivateKey
   std::map<NodeIndex, bytes> path_secrets;
   std::map<NodeIndex, HPKEPrivateKey> private_key_cache;
 
+  TLS_SERIALIZABLE(suite, index, update_secret, path_secrets, private_key_cache);
+
   static TreeKEMPrivateKey solo(CipherSuite suite,
                                 LeafIndex index,
                                 HPKEPrivateKey leaf_priv);

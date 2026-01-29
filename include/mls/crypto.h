@@ -31,6 +31,8 @@ struct KeyAndNonce
 {
   bytes key;
   bytes nonce;
+
+  TLS_SERIALIZABLE(key, nonce)
 };
 
 // opaque HashReference<V>;

@@ -9,6 +9,7 @@
 #include <namespace.h>
 #include <optional>
 #include <stdexcept>
+#include <tuple>
 #include <vector>
 
 #include <tls/compat.h>
@@ -67,6 +68,9 @@ private:
   template<typename T>
   friend ostream& operator<<(ostream& out, const std::vector<T>& data);
 
+  template<typename K, typename V>
+  friend ostream& operator<<(ostream& out, const std::map<K, V>& data);
+
   friend struct varint;
 };
 
@@ -114,6 +118,9 @@ private:
 
   template<typename T>
   friend istream& operator>>(istream& in, std::vector<T>& data);
+
+  template<typename K, typename V>
+  friend istream& operator>>(istream& in, std::map<K, V>& data);
 
   friend struct varint;
 };
@@ -309,6 +316,98 @@ operator>>(istream& str, std::vector<T>& vec)
   // Truncate the primary buffer
   str._buffer.erase(str._buffer.end() - size_diff, str._buffer.end());
 
+  return str;
+}
+
+// Map writer
+template<typename K, typename V>
+ostream&
+operator<<(ostream& str, const std::map<K, V>& map)
+{
+  ostream temp;
+  for (const auto& [key, value] : map) {
+    temp << key << value;
+  }
+
+  varint::encode(str, temp._buffer.size());
+  str.write_raw(temp.bytes());
+
+  return str;
+}
+
+// Map reader
+template<typename K, typename V>
+istream&
+operator>>(istream& str, std::map<K, V>& map)
+{
+  auto size = uint64_t(0);
+  varint::decode(str, size);
+  if (size > str._buffer.size()) {
+    throw ReadError("Map is longer than remaining data");
+  }
+
+  istream r;
+  const auto size_diff = static_cast<ptrdiff_t>(size);
+  r._buffer = std::vector<uint8_t>{ str._buffer.end() - size_diff, str._buffer.end() };
+
+  map.clear();
+  while (r._buffer.size() > 0) {
+    K key{};
+    V value{};
+    r >> key >> value;
+    map[key] = value;
+  }
+
+  str._buffer.erase(str._buffer.end() - size_diff, str._buffer.end());
+
+  return str;
+}
+
+// Tuple writer helper
+template<size_t I = 0, typename... Tp>
+typename std::enable_if<I == sizeof...(Tp), void>::type
+write_tuple_elements(ostream&, const std::tuple<Tp...>&)
+{
+}
+
+template<size_t I = 0, typename... Tp>
+typename std::enable_if<I < sizeof...(Tp), void>::type
+write_tuple_elements(ostream& str, const std::tuple<Tp...>& t)
+{
+  str << std::get<I>(t);
+  write_tuple_elements<I + 1, Tp...>(str, t);
+}
+
+// Tuple writer
+template<typename... Tp>
+ostream&
+operator<<(ostream& str, const std::tuple<Tp...>& tuple)
+{
+  write_tuple_elements(str, tuple);
+  return str;
+}
+
+// Tuple reader helper
+template<size_t I = 0, typename... Tp>
+typename std::enable_if<I == sizeof...(Tp), void>::type
+read_tuple_elements(istream&, std::tuple<Tp...>&)
+{
+}
+
+template<size_t I = 0, typename... Tp>
+typename std::enable_if<I < sizeof...(Tp), void>::type
+read_tuple_elements(istream& str, std::tuple<Tp...>& t)
+{
+  str >> std::get<I>(t);
+  read_tuple_elements<I + 1, Tp...>(str, t);
+}
+
+// Tuple reader
+template<typename... Tp>
+istream&
+operator>>(istream& str, std::tuple<Tp...>& tuple)
+{
+  read_tuple_elements(str, tuple);
   return str;
 }
 
