@@ -2469,4 +2469,42 @@ State::successor(LeafIndex index,
   return next;
 }
 
+tls::ostream&
+operator<<(tls::ostream& str, const State& obj)
+{
+  str << obj._suite
+    << obj._group_id
+    << obj._epoch
+    << obj._tree
+    << obj._tree_priv
+    << obj._transcript_hash
+    << obj._extensions
+    << obj._key_schedule
+    << obj._keys
+    << obj._index
+    << obj._identity_priv
+    << obj._external_psks
+    << obj._resumption_psks;
+  return str;
+}
+
+tls::istream&
+operator>>(tls::istream& str, State& obj)
+{
+  str >> obj._suite
+    >> obj._group_id
+    >> obj._epoch
+    >> obj._tree
+    >> obj._tree_priv
+    >> obj._transcript_hash
+    >> obj._extensions
+    >> obj._key_schedule
+    >> obj._keys
+    >> obj._index
+    >> obj._identity_priv
+    >> obj._external_psks
+    >> obj._resumption_psks;
+  return str;
+}
+
 } // namespace MLS_NAMESPACE

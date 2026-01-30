@@ -244,7 +244,7 @@ public:
     const MessageOpts& msg_opts);
   Tombstone handle_reinit_commit(const MLSMessage& commit);
 
-public:
+protected:
   // Shared confirmed state
   // XXX(rlb@ipv.sx): Can these be made const?
   CipherSuite _suite;
@@ -471,6 +471,15 @@ public:
                   bool has_path,
                   const std::vector<PSKWithSecret>& psks,
                   const std::optional<bytes>& force_init_secret) const;
+
+  // Friend operators for serialization
+  friend tls::ostream& operator<<(tls::ostream& str, const State& obj);
+  friend tls::istream& operator>>(tls::istream& str, State& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const State& obj);
+tls::istream&
+operator>>(tls::istream& str, State& obj);
 
 } // namespace MLS_NAMESPACE
