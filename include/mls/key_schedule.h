@@ -20,6 +20,8 @@ struct HashRatchet
   size_t nonce_size;
   size_t secret_size;
 
+  TLS_SERIALIZABLE(suite, next_secret, next_generation, cache, key_size, nonce_size, secret_size);
+
   // These defaults are necessary for use with containers
   HashRatchet() = default;
   HashRatchet(const HashRatchet& other) = default;
@@ -51,13 +53,23 @@ private:
   NodeIndex root;
   std::map<NodeIndex, bytes> secrets;
   size_t secret_size;
+
+  TLS_SERIALIZABLE(suite, group_size, root, secrets, secret_size);
+
+  friend tls::ostream& operator<<(tls::ostream& str, const SecretTree& obj);
+  friend tls::istream& operator>>(tls::istream& str, SecretTree& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const SecretTree& obj);
+tls::istream&
+operator>>(tls::istream& str, SecretTree& obj);
 
 using ReuseGuard = std::array<uint8_t, 4>;
 
 struct GroupKeySource
 {
-  enum struct RatchetType
+  enum struct RatchetType : uint8_t
   {
     handshake,
     application,
@@ -89,14 +101,22 @@ private:
   HashRatchet& chain(ContentType type, LeafIndex sender);
 
   static const std::array<RatchetType, 2> all_ratchet_types;
+
+  TLS_SERIALIZABLE(suite, secret_tree, chains);
+
+  friend tls::ostream& operator<<(tls::ostream& str, const GroupKeySource& obj);
+  friend tls::istream& operator>>(tls::istream& str, GroupKeySource& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const GroupKeySource& obj);
+tls::istream&
+operator>>(tls::istream& str, GroupKeySource& obj);
 
 struct KeyScheduleEpoch
 {
-private:
   CipherSuite suite;
 
-public:
   bytes joiner_secret;
   bytes epoch_secret;
 
@@ -112,6 +132,8 @@ public:
   bytes init_secret;
 
   HPKEPrivateKey external_priv;
+
+  TLS_SERIALIZABLE(suite, joiner_secret, epoch_secret, sender_data_secret, encryption_secret, exporter_secret, epoch_authenticator, external_secret, confirmation_key, confirmation_tag, membership_key, resumption_psk, init_secret, external_priv);
 
   KeyScheduleEpoch() = default;
 
@@ -190,6 +212,10 @@ struct TranscriptHash
   CipherSuite suite;
   bytes confirmed;
   bytes interim;
+
+  TLS_SERIALIZABLE(suite, confirmed, interim);
+
+  TranscriptHash() = default;
 
   // For a new group
   TranscriptHash(CipherSuite suite_in);

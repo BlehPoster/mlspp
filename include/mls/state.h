@@ -46,6 +46,9 @@ public:
   /// Constructors
   ///
 
+  // For deserialization purposes only
+  State() = default;
+
   // Initialize an empty group
   State(bytes group_id,
         CipherSuite suite,
@@ -267,6 +270,8 @@ protected:
   using EpochRef = std::tuple<bytes, epoch_t>;
   std::map<EpochRef, bytes> _resumption_psks;
 
+  TLS_SERIALIZABLE(_suite, _group_id, _epoch, _tree, _tree_priv, _transcript_hash, _extensions, _key_schedule, _keys, _index, _identity_priv, _external_psks, _resumption_psks);
+
   // Cache of Proposals and update secrets
   struct CachedProposal
   {
@@ -467,6 +472,15 @@ protected:
                   bool has_path,
                   const std::vector<PSKWithSecret>& psks,
                   const std::optional<bytes>& force_init_secret) const;
+
+  // Friend operators for serialization
+  friend tls::ostream& operator<<(tls::ostream& str, const State& obj);
+  friend tls::istream& operator>>(tls::istream& str, State& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const State& obj);
+tls::istream&
+operator>>(tls::istream& str, State& obj);
 
 } // namespace MLS_NAMESPACE

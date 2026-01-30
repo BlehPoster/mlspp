@@ -81,6 +81,8 @@ struct TreeKEMPrivateKey
   std::map<NodeIndex, bytes> path_secrets;
   std::map<NodeIndex, HPKEPrivateKey> private_key_cache;
 
+  TLS_SERIALIZABLE(suite, index, update_secret, path_secrets, private_key_cache);
+
   static TreeKEMPrivateKey solo(CipherSuite suite,
                                 LeafIndex index,
                                 HPKEPrivateKey leaf_priv);
@@ -250,7 +252,7 @@ struct TreeKEMPublicKey
   OptionalNode& node_at(LeafIndex n);
   const OptionalNode& node_at(LeafIndex n) const;
 
-  TLS_SERIALIZABLE(nodes)
+  TLS_SERIALIZABLE(suite, size, nodes, hashes)
 
 #if ENABLE_TREE_DUMP
   void dump() const;
@@ -291,6 +293,8 @@ private:
   OptionalNode blank_node;
 
   friend struct TreeKEMPrivateKey;
+  friend tls::ostream& operator<<(tls::ostream& str, const TreeKEMPublicKey& obj);
+  friend tls::istream& operator>>(tls::istream& str, TreeKEMPublicKey& obj);
 };
 
 tls::ostream&
