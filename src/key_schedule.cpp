@@ -576,4 +576,44 @@ operator==(const TranscriptHash& lhs, const TranscriptHash& rhs)
   return confirmed && interim;
 }
 
+tls::ostream&
+operator<<(tls::ostream& str, const SecretTree& obj)
+{
+  str << obj.suite
+    << obj.group_size
+    << obj.root
+    << obj.secrets
+    << obj.secret_size;
+  return str;
+}
+
+tls::istream&
+operator>>(tls::istream& str, SecretTree& obj)
+{
+  str >> obj.suite
+    >> obj.group_size
+    >> obj.root
+    >> obj.secrets
+    >> obj.secret_size;
+  return str;
+}
+
+tls::ostream&
+operator<<(tls::ostream& str, const GroupKeySource& obj)
+{
+  str << obj.suite
+    << obj.secret_tree
+    << obj.chains;
+  return str;
+}
+
+tls::istream&
+operator>>(tls::istream& str, GroupKeySource& obj)
+{
+  str >> obj.suite
+    >> obj.secret_tree
+    >> obj.chains;
+  return str;
+}
+
 } // namespace MLS_NAMESPACE

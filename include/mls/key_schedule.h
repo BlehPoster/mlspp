@@ -38,14 +38,6 @@ struct HashRatchet
 
 struct SecretTree
 {
-  CipherSuite suite;
-  LeafCount group_size;
-  NodeIndex root;
-  std::map<NodeIndex, bytes> secrets;
-  size_t secret_size;
-
-  TLS_SERIALIZABLE(suite, group_size, root, secrets, secret_size);
-
   SecretTree() = default;
   SecretTree(CipherSuite suite_in,
              LeafCount group_size_in,
@@ -54,7 +46,24 @@ struct SecretTree
   bool has_leaf(LeafIndex sender) { return sender < group_size; }
 
   bytes get(LeafIndex sender);
+
+private:
+  CipherSuite suite;
+  LeafCount group_size;
+  NodeIndex root;
+  std::map<NodeIndex, bytes> secrets;
+  size_t secret_size;
+
+  TLS_SERIALIZABLE(suite, group_size, root, secrets, secret_size);
+
+  friend tls::ostream& operator<<(tls::ostream& str, const SecretTree& obj);
+  friend tls::istream& operator>>(tls::istream& str, SecretTree& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const SecretTree& obj);
+tls::istream&
+operator>>(tls::istream& str, SecretTree& obj);
 
 using ReuseGuard = std::array<uint8_t, 4>;
 
@@ -65,14 +74,6 @@ struct GroupKeySource
     handshake,
     application,
   };
-
-  CipherSuite suite;
-  SecretTree secret_tree;
-
-  using Key = std::tuple<RatchetType, LeafIndex>;
-  std::map<Key, HashRatchet> chains;
-
-  TLS_SERIALIZABLE(suite, secret_tree, chains);
 
   GroupKeySource() = default;
   GroupKeySource(CipherSuite suite_in,
@@ -93,7 +94,24 @@ struct GroupKeySource
   HashRatchet& chain(ContentType type, LeafIndex sender);
 
   static const std::array<RatchetType, 2> all_ratchet_types;
+
+private:
+  CipherSuite suite;
+  SecretTree secret_tree;
+
+  using Key = std::tuple<RatchetType, LeafIndex>;
+  std::map<Key, HashRatchet> chains;
+
+  TLS_SERIALIZABLE(suite, secret_tree, chains);
+
+  friend tls::ostream& operator<<(tls::ostream& str, const GroupKeySource& obj);
+  friend tls::istream& operator>>(tls::istream& str, GroupKeySource& obj);
 };
+
+tls::ostream&
+operator<<(tls::ostream& str, const GroupKeySource& obj);
+tls::istream&
+operator>>(tls::istream& str, GroupKeySource& obj);
 
 struct KeyScheduleEpoch
 {
