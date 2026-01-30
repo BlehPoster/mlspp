@@ -46,6 +46,7 @@ public:
   /// Constructors
   ///
 
+  // For deserialization purposes only
   State() = default;
 
   // Initialize an empty group
